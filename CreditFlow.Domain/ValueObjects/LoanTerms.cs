@@ -29,7 +29,7 @@ namespace CreditFlow.Domain.ValueObjects
 
 		public static LoanTerms Of(Money principalAmount, InterestRate interestRate, int termMonths)
 		{
-			if (termMonhts <= 0) 
+			if (termMonths <= 0) 
 				throw new BusinessRuleViolationException("Loan term must be at least 1 month.");
 
 			if (principalAmount.Amount <= 0)

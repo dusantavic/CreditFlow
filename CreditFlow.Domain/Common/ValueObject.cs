@@ -12,7 +12,7 @@ namespace CreditFlow.Domain.Common
 
 		public bool Equals(ValueObject? other)
 		{
-			if (other is null || other.GetType != GetType()) return false;
+			if (other is null || other.GetType() != GetType()) return false;
 			return GetEqualityComponents().SequenceEqual(other.GetEqualityComponents());
 		}
 

@@ -1,7 +1,4 @@
 ﻿using CreditFlow.Domain.Common;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace CreditFlow.Domain.ValueObjects
 {
@@ -14,7 +11,7 @@ namespace CreditFlow.Domain.ValueObjects
 	/// </summary>
 	public sealed class FinancialObligations : ValueObject
 	{
-		public Money ExistingMonthlyDept { get; }
+		public Money ExistingMonthlyDebt { get; }
 		private FinancialObligations(Money existingMonthlyDebt)
 		{
 			ExistingMonthlyDebt = existingMonthlyDebt;

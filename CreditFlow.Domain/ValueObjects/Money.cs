@@ -48,12 +48,12 @@ namespace CreditFlow.Domain.ValueObjects
 		// hold the same Money reference and one silently changes it under the other.
 		public Money Add(Money other)
 		{
-			EnsureSameCurrency(other);
+			EnsureSameCurrencyAs(other);
 			return Of(Amount + other.Amount, Currency); 
 		}
 		public Money Subtract(Money other)
 		{
-			EnsureSameCurrency(other);
+			EnsureSameCurrencyAs(other);
 			return Of(Amount - other.Amount, Currency);
 		}
 
@@ -67,23 +67,28 @@ namespace CreditFlow.Domain.ValueObjects
 
 		public bool IsGreaterThan(Money other)
 		{
-			EnsureSameCurrency(other);
+			EnsureSameCurrencyAs(other);
 			return Amount > other.Amount;
 		}
 
 		public bool IsGreaterThanOrEqualTo(Money other)
 		{
-			EnsureSameCurrency(other);
+			EnsureSameCurrencyAs(other);
 			return Amount >= other.Amount;
 		}
 
 		// Centralizes the currency check so every arithmetic/comparison method
 		// above stays short and doesn't repeat the same guard clause.
-		private void EnsureSameCurrency(Money other)
+		public void EnsureSameCurrencyAs(Money other, string? context = null)
 		{
 			if (Currency != other.Currency)
-				throw new BusinessRuleViolationException(
-					$"Cannot operate on amounts in different currencies ({Currency} vs {other.Currency}).");
+			{
+				var message = context is null
+					? $"Cannot operate on amounts in different currencies ({Currency} vs {other.Currency})."
+					: $"{context} ({Currency} vs {other.Currency}).";
+
+				throw new BusinessRuleViolationException(message);
+			}
 		}
 
 		// Required by the ValueObject base class: two Money instances are equal 
