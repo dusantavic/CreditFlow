@@ -3,7 +3,7 @@
 
 namespace CreditFlow.Domain.LoanApplications.Events
 {
-	public sealed record LoanApplicationRejected(Guid LoanApplicationId, Guid ApplicantId) : IDomainEvent
+	public sealed record LoanApplicationRejected(Guid LoanApplicationId, Guid ApplicantId, IReadOnlyList<string> Reasons) : IDomainEvent
 	{
 		public DateTime OccurredOnUtc { get; init; } = DateTime.UtcNow;
 
