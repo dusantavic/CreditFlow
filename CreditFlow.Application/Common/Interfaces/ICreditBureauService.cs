@@ -1,4 +1,5 @@
 ﻿
+using CreditFlow.Application.Common.Models;
 using CreditFlow.Domain.ValueObjects;
 
 namespace CreditFlow.Application.Common.Interfaces
@@ -10,6 +11,6 @@ namespace CreditFlow.Application.Common.Interfaces
 	/// </summary>
 	public interface ICreditBureauService
 	{
-		Task<CreditScore> GetCreditScoreAsync(Guid applicantId, CancellationToken cancellationToken = default); 
+		Task<CreditBureauReport> GetReportAsync(Guid applicantId, CancellationToken cancellationToken = default); 
 	}
 }
