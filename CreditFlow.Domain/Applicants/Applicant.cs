@@ -41,7 +41,7 @@ namespace CreditFlow.Domain.Applicants
 				"Monthly income and existing debt must be expressed in the same currency");
 
 			return new Applicant(
-				Guid.NewGuid(),
+				Guid.CreateVersion7(), //timely sorted like autoincrement
 				personalInfo,
 				employmentInfo,
 				financialObligations,

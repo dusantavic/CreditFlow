@@ -54,7 +54,7 @@ namespace CreditFlow.Domain.LoanApplications
 			if (string.IsNullOrWhiteSpace(purpose))
 				throw new BusinessRuleViolationException("Loan purpose is required.");
 
-			return new LoanApplication(Guid.NewGuid(), applicantId, requestedAmount, requestedTermMonths, purpose.Trim()); 
+			return new LoanApplication(Guid.CreateVersion7(), applicantId, requestedAmount, requestedTermMonths, purpose.Trim()); 
 		}
 
 		public void Submit()
