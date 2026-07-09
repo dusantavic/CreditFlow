@@ -16,6 +16,8 @@ namespace CreditFlow.Domain.ValueObjects
 		public IReadOnlyList<string> Reasons { get; }
 		public DateTime AssessedAtUtc { get; }
 
+		private CreditAssessment() { } // EF Core
+
 		private CreditAssessment(
 			CreditScore creditScore,
 			RiskTier riskTier,

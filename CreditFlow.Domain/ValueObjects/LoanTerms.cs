@@ -19,6 +19,8 @@ namespace CreditFlow.Domain.ValueObjects
 		public int TermMonths { get; }
 		public Money MonthlyPayment { get; }
 
+		private LoanTerms() { } // EF Core
+
 		private LoanTerms(Money principalAmount, InterestRate interestRate, int termMonths, Money monthlyPayment)
 		{
 			PrincipalAmount = principalAmount;

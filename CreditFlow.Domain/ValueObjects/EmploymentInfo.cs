@@ -17,6 +17,8 @@ namespace CreditFlow.Domain.ValueObjects
 		public Money MonthlyIncome { get; }
 		public int YearsEmployed { get; }
 
+		private EmploymentInfo() { } // EF Core
+
 		private EmploymentInfo(string employerName, Money monthlyIncome, int yearsEmployed)
 		{
 			EmployerName = employerName;

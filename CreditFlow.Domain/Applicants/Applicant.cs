@@ -18,6 +18,8 @@ namespace CreditFlow.Domain.Applicants
 		public FinancialObligations FinancialObligations { get; private set; }
 		public DateTime RegisteredAtUtc { get; private set; }
 
+		private Applicant() { } // EF Core
+
 		private Applicant(
 			Guid id,
 			PersonalInfo personalInfo,

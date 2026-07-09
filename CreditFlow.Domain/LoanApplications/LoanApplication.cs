@@ -25,6 +25,8 @@ namespace CreditFlow.Domain.LoanApplications
 		public LoanTerms? ApprovedTerms { get; private set; }
 		public IReadOnlyList<string>? RejectionReasons { get; private set; }
 		
+		private LoanApplication() { } // EF Core
+
 		private LoanApplication(
 			Guid id,
 			Guid applicantId,

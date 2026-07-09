@@ -15,6 +15,8 @@ namespace CreditFlow.Domain.ValueObjects
 	public sealed class InterestRate : ValueObject
 	{
 		public Percentage AnnualRate { get; }
+		private InterestRate() { } // EF Core
+
 		private InterestRate(Percentage annualRate)
 		{
 			AnnualRate = annualRate;

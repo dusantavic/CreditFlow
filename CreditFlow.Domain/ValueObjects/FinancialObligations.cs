@@ -22,6 +22,8 @@ namespace CreditFlow.Domain.ValueObjects
 		/// on months-old information.
 		/// </summary>
 		public DateTime? LastCheckedAtUtc { get; }
+		private FinancialObligations() { } // EF Core
+
 		private FinancialObligations(Money existingMonthlyDebt, DateTime? lastCheckedAtUtc)
 		{
 			ExistingMonthlyDebt = existingMonthlyDebt;
