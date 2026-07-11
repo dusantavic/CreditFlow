@@ -31,7 +31,7 @@ namespace CreditFlow.Domain.Underwriting
 			if (riskTier == RiskTier.Declined)
 			{
 				reasons.Add(
-					$"Credit score {creditScore} is below the minimum acceptable score pf {_options.MinAcceptableCreditScore}.");
+					$"Credit score {creditScore} is below the minimum acceptable score of {_options.MinAcceptableCreditScore}.");
 				var declinedAssessment = CreditAssessment.Of(creditScore, riskTier, Percentage.Of(0), reasons);
 				return UnderwritingDecision.Decline(declinedAssessment, reasons); 
 			}

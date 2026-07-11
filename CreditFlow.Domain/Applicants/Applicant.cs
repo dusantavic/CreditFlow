@@ -83,9 +83,9 @@ namespace CreditFlow.Domain.Applicants
 				 proposedMonthlyPayment,
 				 "Proposed monthly payment must be in the same currency as the applicant's income");
 
-			var totalMonthlyDept = FinancialObligations.ExistingMonthlyDebt.Add(proposedMonthlyPayment);
+			var totalMonthlyDebt = FinancialObligations.ExistingMonthlyDebt.Add(proposedMonthlyPayment);
 
-			var ratioValue = totalMonthlyDept.Amount / EmploymentInfo.MonthlyIncome.Amount * 100m;
+			var ratioValue = totalMonthlyDebt.Amount / EmploymentInfo.MonthlyIncome.Amount * 100m;
 			var cappedRatio = Math.Min(ratioValue, 100m);
 
 			return Percentage.Of(cappedRatio); 

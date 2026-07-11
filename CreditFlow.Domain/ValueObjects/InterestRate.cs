@@ -14,6 +14,7 @@ namespace CreditFlow.Domain.ValueObjects
 	/// </summary>
 	public sealed class InterestRate : ValueObject
 	{
+		// EF Core owned types don't have their own identity — they're keyed by the owner's primary key
 		public Percentage AnnualRate { get; }
 		private InterestRate() { } // EF Core
 

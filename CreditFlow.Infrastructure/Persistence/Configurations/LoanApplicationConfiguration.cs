@@ -1,10 +1,6 @@
 ﻿using CreditFlow.Domain.LoanApplications;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace CreditFlow.Infrastructure.Persistence.Configurations
 {

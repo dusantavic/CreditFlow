@@ -38,7 +38,7 @@ namespace CreditFlow.Infrastructure.Persistence.Configurations
 				// flattens everything onto the same Applicants table
 				employmentInfo.OwnsOne(e => e.MonthlyIncome, money =>
 				{
-					money.Property(m => m.Amount).HasColumnName("MonthlyIncomeAmount").HasColumnType("decimal(18,2").IsRequired();
+					money.Property(m => m.Amount).HasColumnName("MonthlyIncomeAmount").HasColumnType("decimal(18,2)").IsRequired();
 					money.Property(m => m.Currency).HasColumnName("MonthlyIncomeCurrency").HasMaxLength(3).IsRequired();
 				});
 			});
@@ -48,7 +48,7 @@ namespace CreditFlow.Infrastructure.Persistence.Configurations
 				financialObligations.Property(f => f.LastCheckedAtUtc).HasColumnName("DebtLastCheckedAtUtc");
 				financialObligations.OwnsOne(f => f.ExistingMonthlyDebt, money =>
 				{
-					money.Property(m => m.Amount).HasColumnName("ExistingMonthlyDeptAmount").HasColumnType("decimal(18,2)").IsRequired();
+					money.Property(m => m.Amount).HasColumnName("ExistingMonthlyDebtAmount").HasColumnType("decimal(18,2)").IsRequired();
 					money.Property(m => m.Currency).HasColumnName("ExistingMonthlyDebtCurrency").HasMaxLength(3).IsRequired();
 				});
 			});
