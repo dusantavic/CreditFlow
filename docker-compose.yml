@@ -9,9 +9,17 @@ services:
       # - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      - CreditBureau__BaseUrl=http://credit-bureau:8080 # container-to-container internal communication
     depends_on:
       db:
         condition: service_healthy
+
+  credit-bureau: 
+    build: 
+      context: .
+      dockerfile: CreditBureau.Api/Dockerfile
+    ports: 
+      - "8081:8080"
 
   db:
     image: postgres:16-alpine

@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="CreditBureau.Api/CreditBureau.Api.csproj" Id="53d850d7-4aef-4440-ab53-2bc9eae0d133" />
   <Project Path="CreditFlow.Api/CreditFlow.Api.csproj" Id="f88fa3ef-f1ca-4c0c-96bb-003b7ba7e6cf" />
   <Project Path="CreditFlow.Application/CreditFlow.Application.csproj" Id="f00cfd49-68f4-4368-9bb6-2e4d8ed2e6ae" />
   <Project Path="CreditFlow.Domain/CreditFlow.Domain.csproj" Id="0a6a10f0-f160-4878-aead-a0def1415925" />

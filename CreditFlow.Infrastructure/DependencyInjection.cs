@@ -8,7 +8,9 @@ using CreditFlow.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
+using Polly;
 
 namespace CreditFlow.Infrastructure
 {
@@ -44,8 +46,39 @@ namespace CreditFlow.Infrastructure
 				return new UnderwritingPolicy(options);
 			});
 
-			//@dusan this is temporary
-			services.AddScoped<ICreditBureauService, SimulatedCreditBureauService>();
+			var creditBureauBaseUrl = configuration["CreditBureau:BaseUrl"]
+				?? throw new InvalidOperationException(
+					"Configuration 'CreditBureau:BaseUrl' is missing. See it via appsettings.json r the CreditBureau__BaseUrl environment variable (Docker/production).");
+
+			services.AddHttpClient<ICreditBureauService, HttpCreditBureauService>(client =>
+			{
+				client.BaseAddress = new Uri(creditBureauBaseUrl);
+				client.Timeout = TimeSpan.FromSeconds(10);
+			})
+				.AddResilienceHandler("credit-bureau-resilience", builder =>
+				{
+					// Retries transient failures (network erros, 5xx, timeouts) up to 3
+					// times with exponential backoff, then opens a circuit breaker if 
+					// failures keep happening - prevents hammering a struggling downstream
+					// servise and gives it room to recover. 
+					builder.AddRetry(new HttpRetryStrategyOptions
+					{
+						MaxRetryAttempts = 3,
+						BackoffType = DelayBackoffType.Exponential,
+						Delay = TimeSpan.FromMilliseconds(300)
+					});
+
+					builder.AddCircuitBreaker(new HttpCircuitBreakerStrategyOptions
+					{
+						FailureRatio = 0.5,
+						SamplingDuration = TimeSpan.FromSeconds(30),
+						MinimumThroughput = 5,
+						BreakDuration = TimeSpan.FromSeconds(15)
+					});
+
+					builder.AddTimeout(TimeSpan.FromSeconds(5));
+				});
+
 
 			return services; 
 		}
