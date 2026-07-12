@@ -26,6 +26,19 @@ if (string.IsNullOrWhiteSpace(connectionString))
 		"ConnectionStrings__DefaultConnection environment variable (Docker/production).");
 }
 
+const string ReactAppCorsPolicy = "ReactApp";
+
+builder.Services.AddCors(options =>
+{
+	options.AddPolicy(ReactAppCorsPolicy, policy =>
+	{
+		policy
+			.WithOrigins(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [])
+			.AllowAnyMethod()
+			.AllowAnyHeader();
+	});
+});
+
 var app = builder.Build();
 
 // Applies any pending EF Core migrations automatically on startup.
@@ -48,6 +61,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// CORS goes begore MapControllers(), and after UseHttpsRedirection.
+app.UseCors(ReactAppCorsPolicy); 
 
 app.UseAuthorization();
 
