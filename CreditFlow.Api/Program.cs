@@ -4,6 +4,8 @@ using CreditFlow.Infrastructure;
 using CreditFlow.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using Serilog;
+using Serilog.Sinks.PostgreSQL;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,6 +39,40 @@ builder.Services.AddCors(options =>
 			.AllowAnyMethod()
 			.AllowAnyHeader();
 	});
+});
+
+// Serilog 
+
+// Mapping each log event's fields to columns in the "Logs" table. 
+var columnOptions = new Dictionary<string, ColumnWriterBase>
+{
+	{ "message", new RenderedMessageColumnWriter() },
+	{ "message_template", new MessageTemplateColumnWriter() },
+	{ "level", new LevelColumnWriter(true, NpgsqlTypes.NpgsqlDbType.Varchar) },
+	{ "raise_date", new TimestampColumnWriter() },
+	{ "exception", new ExceptionColumnWriter() },
+	{ "properties", new LogEventSerializedColumnWriter(NpgsqlTypes.NpgsqlDbType.Jsonb) },
+	{ "machine_name", new SinglePropertyColumnWriter("MachineName", PropertyWriteMethod.ToString, NpgsqlTypes.NpgsqlDbType.Varchar) }
+};
+
+builder.Host.UseSerilog((context, services, loggerConfiguration) =>
+{
+	loggerConfiguration
+		.ReadFrom.Configuration(context.Configuration)
+		.Enrich.FromLogContext()
+		.Enrich.WithMachineName()
+		.WriteTo.Console()
+		.WriteTo.PostgreSQL(
+			connectionString: connectionString,
+			tableName: "Logs",
+			columnOptions: columnOptions,
+			needAutoCreateTable: true,
+			// Batching avoids one INSERT per log event — logs are buffered
+			// and flushed periodically, which matters once LoggingBehavior
+			// is firing on every single command/query.
+			batchSizeLimit: 50,
+			period: TimeSpan.FromSeconds(5),
+			restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information);
 });
 
 var app = builder.Build();
