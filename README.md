@@ -13,6 +13,7 @@ A companion frontend client, [`CreditFlow.App`](../CreditFlow.App), consumes thi
 - [Architecture](#architecture)
 - [Domain model](#domain-model)
 - [Underwriting logic](#underwriting-logic)
+- [Credit bureau integration](#credit-bureau-integration)
 - [Tech stack](#tech-stack)
 - [Project structure](#project-structure)
 - [Getting started](#getting-started)
@@ -39,7 +40,7 @@ CreditFlow.Api              → controllers, middleware, composition root
 
 - **Domain** never references EF Core, ASP.NET Core, or any framework — it's plain C#. Its only external dependency is MediatR's `INotification` marker interface, used for domain events.
 - **Application** defines everything Infrastructure must provide (`ILoanApplicationRepository`, `ICreditBureauService`, `IUnitOfWork`, etc.) as interfaces, and implements all business workflows as CQRS commands/queries via MediatR.
-- **Infrastructure** implements those interfaces with EF Core + PostgreSQL, and hosts the (currently simulated) credit bureau integration.
+- **Infrastructure** implements those interfaces with EF Core + PostgreSQL, and calls out to `CreditBureau.Api` — a separate, independently deployed service — over HTTP for credit reports.
 - **Api** wires everything together, exposes REST endpoints, and translates domain/application failures into HTTP responses.
 
 ### Why CQRS
@@ -135,13 +136,24 @@ Every decision — approved or declined — returns a full list of human-readabl
 
 ---
 
+## Credit bureau integration
+
+Real credit bureau lookups are a paid, external, third-party integration in any real lending system — not something a portfolio project can call directly. CreditFlow addresses this architecturally rather than papering over it: **`CreditBureau.Api`** is a second, intentionally minimal ASP.NET Core service in this same repository, standing in for that external provider. It exposes a single endpoint (`GET /api/credit-report/{applicantId}`) and returns a deterministic, per-applicant simulated score and debt figure — same applicant, same result, every time (useful for repeatable manual testing).
+
+`CreditFlow.Api` talks to it exactly as it would talk to a real external provider: over plain HTTP, through `HttpCreditBureauService`, with no shared code, no shared database, and no in-process shortcut between the two services. The `HttpClient` used for this call is configured with `Microsoft.Extensions.Http.Resilience` (retry with exponential backoff, a circuit breaker, and a timeout) — so a slow or momentarily failing bureau call is retried transparently, and a persistently failing one trips a circuit breaker instead of continuously hammering a struggling downstream service.
+
+This means the only thing that's "simulated" is the data the bureau returns — the integration pattern itself (separate service, network call, resilience policies) is exactly what a real integration with an actual bureau would look like.
+
+---
+
 ## Tech stack
 
 - **.NET 10** / ASP.NET Core Web API
 - **EF Core** + **PostgreSQL** (Npgsql provider)
 - **MediatR** — CQRS command/query dispatch and pipeline behaviors
 - **FluentValidation** — request validation
-- **Docker** & **Docker Compose** — containerized API + database, with health-checked startup ordering
+- **Microsoft.Extensions.Http.Resilience** (Polly under the hood) — retry, circuit breaker, and timeout policies for the credit bureau HTTP client
+- **Docker** & **Docker Compose** — containerized API + database + credit bureau service, with health-checked startup ordering
 - **Scalar** — interactive OpenAPI documentation (Development environment only)
 
 ---
@@ -154,7 +166,8 @@ CreditFlow/
 ├── CreditFlow.Application/       CQRS commands/queries, validators, pipeline behaviors, interfaces
 ├── CreditFlow.Infrastructure/    EF Core DbContext, repositories, migrations, external service implementations
 ├── CreditFlow.Api/               Controllers, middleware, Program.cs, appsettings
-├── docker-compose.yml
+├── CreditBureau.Api/             Minimal standalone service simulating an external credit bureau
+├── docker-compose.yml            Orchestrates api + credit-bureau + db together
 ├── .env.example
 └── CreditFlow.slnx
 ```
@@ -171,7 +184,7 @@ CreditFlow/
 
 ### Running with Docker Compose
 
-This is the fastest way to run the full system (API + PostgreSQL) exactly as it would run in a deployed environment.
+This is the fastest way to run the full system (API + PostgreSQL + the simulated credit bureau service) exactly as it would run in a deployed environment.
 
 1. Copy the environment template and fill in local values:
 
@@ -185,11 +198,15 @@ This is the fastest way to run the full system (API + PostgreSQL) exactly as it 
    docker compose up --build
    ```
 
+   This starts three services: `api` (port `8080`), `credit-bureau` (port `8081`), and `db` (port `5432`).
+
 3. The API is available at `http://localhost:8080`. In `Development` mode, interactive API docs are at:
 
    ```
    http://localhost:8080/scalar/v1
    ```
+
+   The credit bureau simulator can be inspected directly at `http://localhost:8081/api/credit-report/{any-guid}`.
 
 4. Database migrations are applied automatically on startup (`Database.Migrate()` in `Program.cs`) — no manual migration step is required for a fresh database.
 
@@ -205,21 +222,22 @@ This is the fastest way to run the full system (API + PostgreSQL) exactly as it 
 
 Useful for debugging directly in Visual Studio / your IDE of choice.
 
-1. Start only the database:
+1. Start the database and the credit bureau service (both run fine as containers even while you debug the API directly):
 
    ```bash
-   docker compose up db -d
+   docker compose up db credit-bureau -d
    ```
 
-2. Set the connection string via .NET User Secrets (never committed to source control):
+2. Set the required configuration via .NET User Secrets (never committed to source control):
 
    ```bash
    cd CreditFlow.Api
    dotnet user-secrets init
    dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=CreditFlow;Username=<your-user>;Password=<your-password>"
+   dotnet user-secrets set "CreditBureau:BaseUrl" "http://localhost:8081"
    ```
 
-   (Values must match whatever you set in your `.env` file for the `db` service.)
+   (Connection string values must match whatever you set in your `.env` file for the `db` service. Note the credit bureau URL uses `localhost` here, not the `credit-bureau` hostname used inside the Docker network.)
 
 3. Run the API from your IDE, or:
 
@@ -243,9 +261,9 @@ Configuration follows the standard ASP.NET Core layering (`appsettings.json` →
 |---|---|---|
 | `appsettings.json` | Structure, non-secret defaults (underwriting thresholds) | Yes |
 | `appsettings.Development.json` / `appsettings.Production.json` | Environment-specific logging levels | Yes |
-| .NET User Secrets | Local connection string | No (lives outside the repo) |
+| .NET User Secrets | Local connection string, local credit bureau URL | No (lives outside the repo) |
 | `.env` (Docker Compose) | Local Postgres credentials | No (`.env.example` is committed instead) |
-| Container/orchestrator environment variables | Production connection string, CORS origins | No |
+| Container/orchestrator environment variables | Production connection string, CORS origins, credit bureau URL | No |
 
 No credential or connection string is ever hardcoded or committed in plain text.
 
@@ -275,7 +293,7 @@ Full request/response schemas are available via Scalar (`/scalar/v1`) when runni
 
 This is a portfolio project, and a few tradeoffs were made consciously rather than left as oversights:
 
-- **Credit bureau integration is simulated.** `SimulatedCreditBureauService` generates a deterministic (per-applicant) score and debt figure locally, rather than calling a real (paid) third-party bureau API. It's marked as temporary in code, with a real HTTP-based implementation planned as a follow-up.
+- **`CreditBureau.Api`'s data is simulated, not sourced from a real bureau.** The integration pattern itself (separate service, HTTP call, retry/circuit-breaker/timeout policies) mirrors a real third-party integration; only the underlying data generation is fake — a real deployment would swap this one service for a client to an actual paid bureau provider, with `CreditFlow.Api` unaffected.
 - **Migrations run automatically on API startup.** Convenient for local development and demos; a real production deployment would more likely run migrations as an explicit, separate release step.
 - **No authentication/authorization layer yet.** All endpoints are currently open — this would be a required addition before any real deployment.
 - **List query performance is not fully benchmarked at scale.** Filtering/sorting works correctly via EF Core projections, but hasn't been load-tested against large datasets.
