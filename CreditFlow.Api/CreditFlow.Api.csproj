@@ -26,4 +26,10 @@
     <ProjectReference Include="..\CreditFlow.Infrastructure\CreditFlow.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Lets the integration test project reference the internal, generated Program class
+         required by WebApplicationFactory<Program>. -->
+    <InternalsVisibleTo Include="CreditFlow.Api.IntegrationTests" />
+  </ItemGroup>
+
 </Project>

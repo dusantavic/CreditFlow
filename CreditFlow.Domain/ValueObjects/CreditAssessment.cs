@@ -51,11 +51,6 @@ namespace CreditFlow.Domain.ValueObjects
 			yield return CreditScore;
 			yield return RiskTier;
 			yield return DebtToIncomeRatio;
-			// Reasons and AssessedAtUtc are intentionally excluded from equality:
-			// two assessments with the same score/tier/DTI are the "same"
-			// business outcome even if computed at slightly different timestamps
-			// or with reasons phrased in a different order.
-			yield return AssessedAtUtc.Date; 
 		}
 
 		public override string ToString()
