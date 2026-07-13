@@ -1,4 +1,5 @@
 # CreditFlow
+[![CI](https://github.com/dusantavic/CreditFlow/actions/workflows/ci.yml/badge.svg)](https://github.com/dusantavic/CreditFlow/actions/workflows/ci.yml)
 
 **Enterprise-grade loan origination & underwriting API**, built with ASP.NET Core (.NET 10) as a demonstration of Clean Architecture, Domain-Driven Design, and CQRS applied to a domain with genuine business complexity — not a CRUD showcase.
 
